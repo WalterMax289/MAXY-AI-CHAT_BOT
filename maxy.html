@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAXY - The AI You Need</title>
+    <style>
+        @font-face {
+            font-family: 'Caviar Dreams';
+            src: url('fonts/CaviarDreams-Bold-webfont.woff2') format('woff2'),
+                 url('fonts/CaviarDreams-Bold-webfont.woff') format('woff'),
+                 url('fonts/CaviarDreams_Bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        /* Reset and base styles */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            background: #000;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: #fff;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Canvas background - hidden on mobile */
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        @media (max-width: 767px) {
+            #canvas {
+                display: none;
+            }
+        }
+
+        /* Fixed header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.4);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            z-index: 30;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        header .logo-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+        }
+
+        header .logo-circle:hover {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        /* Hamburger menu button */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 32px;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        header nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 30px;
+        }
+
+        header nav a {
+            color: #fff;
+            font-size: 18px;
+            text-decoration: none;
+            opacity: 0.9;
+            transition: opacity 0.3s, transform 0.2s;
+        }
+
+        header nav a:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        /* Fixed footer */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 40px;
+            background: rgba(0, 0, 0, 0.4);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            z-index: 30;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            box-sizing: border-box;
+        }
+
+        footer a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile/low-end adjustments */
+        @media (max-width: 768px) {
+            header,
+            footer {
+                backdrop-filter: none !important;
+                background: rgba(0, 0, 0, 0.8);
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            header nav {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: none;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            }
+
+            header nav.open {
+                display: block;
+            }
+
+            header nav ul {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+                padding: 20px 0;
+            }
+
+            header nav a {
+                font-size: 20px;
+            }
+        }
+
+        /* Hero overlay */
+        .overlay {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            z-index: 10;
+            pointer-events: none;
+            text-align: center;
+            padding: 120px 20px 80px;
+        }
+
+        .overlay h2 {
+            margin: 0;
+            font-family: 'Caviar Dreams', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 90px;
+            font-weight: bold;
+            text-transform: uppercase;
+            line-height: 1;
+            letter-spacing: 10px;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3),
+                         0 4px 20px rgba(0, 0, 0, 0.8);
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .overlay .description {
+            max-width: 900px;
+            font-size: 20px;
+            line-height: 1.6;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 1);
+        }
+
+        .try-button {
+            pointer-events: auto;
+            font-family: 'Caviar Dreams', system-ui, sans-serif;
+            font-size: 36px;
+            font-weight: bold;
+            padding: 20px 60px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 3px solid #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            text-decoration: none;
+            display: inline-block;
+            letter-spacing: 4px;
+        }
+
+        .try-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.4);
+        }
+
+        /* Scroll down indicator */
+        .mouse-scroll {
+            pointer-events: auto;
+            cursor: pointer;
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 34px;
+            height: 55px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 60px;
+            opacity: 1;
+            transition: opacity 1s;
+        }
+
+        .mouse-scroll:hover {
+            opacity: 1;
+        }
+
+        .mouse-scroll::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            animation: scrollWheel 1.8s infinite;
+        }
+
+        @keyframes scrollWheel {
+            0% { opacity: 1; top: 10px; }
+            100% { opacity: 0; top: 28px; }
+        }
+
+        @media (pointer: coarse) {
+            .mouse-scroll {
+                display: none;
+            }
+        }
+
+        /* Sections */
+        #about, #contact, #faq {
+            min-height: 100vh;
+            padding: 120px 20px 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #about h2, #contact h2, #faq h2 {
+            font-size: 48px;
+            font-weight: bold;
+            letter-spacing: 6px;
+            margin-bottom: 60px;
+        }
+
+        .boxes-container {
+            display: flex;
+            gap: 40px;
+            max-width: 1400px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .box {
+            flex: 1;
+            min-width: 280px;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 40px 30px;
+            border-radius: 16px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .box h3 {
+            margin: 0 0 20px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .box p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .box strong {
+            color: #ffffff;
+        }
+
+        /* Scroll animations */
+        .animate-once,
+        .animate-middle,
+        .animate-left,
+        .animate-right {
+            opacity: 0;
+            transition: opacity 1.2s ease-in, transform 1.2s ease;
+        }
+
+        .animate-once {
+            transform: translateY(60px);
+        }
+
+        .animate-middle {
+            transform: translateY(100px) scale(0.9);
+            transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .animate-left {
+            transform: translateX(-100px);
+        }
+
+        .animate-right {
+            transform: translateX(100px);
+        }
+
+        .visible {
+            opacity: 1 !important;
+            transform: translateY(0) translateX(0) scale(1) !important;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 900px) {
+            .boxes-container {
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            .overlay h2 {
+                font-size: 70px;
+                letter-spacing: 8px;
+            }
+
+            .try-button {
+                font-size: 28px;
+                padding: 16px 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 15px 20px;
+            }
+
+            footer {
+                padding: 10px 20px;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .overlay h2 {
+                font-size: 60px;
+                letter-spacing: 6px;
+            }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(15px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .auth-form h3 {
+            font-size: 32px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .auth-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            box-sizing: border-box;
+        }
+
+        .auth-submit {
+            width: 100%;
+            padding: 15px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .auth-submit:hover {
+            transform: scale(1.02);
+        }
+
+        .auth-footer {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .auth-footer p {
+            margin-bottom: 12px;
+            font-size: 15px;
+            opacity: 0.7;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #f7f7f7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(132, 132, 132, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with hamburger -->
+    <header>
+        <img src="assets/maxy12.gif" alt="MAXY Logo" class="logo-circle" id="logoGif" title="Click to refresh" loading="lazy">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+        <nav>
+            <ul>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="signup.html">Sign Up</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Background canvas -->
+    <canvas id="canvas"></canvas>
+
+    <!-- Hero section -->
+    <div class="overlay">
+        <h2>MAXY</h2>
+        <div class="description">
+            <p>MAXY is a powerful AI assistant built to help you with everything — from coding and problem-solving to creative ideas and everyday questions.</p>
+            <p>Developed in Bengaluru, India, we're dedicated to making advanced AI simple, fast, and completely free for everyone.</p>
+            <p>Join us in exploring the future of intelligent assistance.</p>
+        </div>
+        <a href="chat.html" class="try-button">Try MAXY Now</a>
+        <a href="#about" class="mouse-scroll" aria-label="Scroll down"></a>
+    </div>
+
+    <!-- About section -->
+    <section id="about" class="animate-once">
+        <h2>About MAXY</h2>
+        <div class="boxes-container">
+            <div class="box animate-left">
+                <h3>What's MAXY?</h3>
+                <p>MAXY is an AI-powered chatbot designed to understand your questions, analyze data, and provide clear, accurate responses in real time.</p>
+                <p>Whether you’re looking for insights, answers, or assistance, MAXY is built to adapt to your needs and deliver results efficiently.</p>
+            </div>
+
+            <div class="box animate-middle">
+                <h3>Our Mission</h3>
+                <p>Our mission is to create an AI that is:</p>
+                <p><strong>Smart</strong> – Learns continuously from data and interactions</p>
+                <p><strong>Reliable</strong> – Provides consistent and accurate responses</p>
+                <p><strong>Accessible</strong> – Easy to use for everyone, anytime</p>
+                <p><strong>Secure</strong> – Built with privacy and user trust as top priorities</p>
+            </div>
+
+            <div class="box animate-right">
+                <h3>Why MAXY?</h3>
+                <p>Unlike traditional chatbots, MAXY focuses on:</p>
+                <p>• Context-aware conversations</p>
+                <p>• Data-driven answers</p>
+                <p>• Fast and responsive interactions</p>
+                <p>• Scalable architecture for future growth</p>
+                <p>We’re not just building an AI — we’re building a smarter way to interact with technology.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact section -->
+    <section id="contact" class="animate-once">
+        <h2>Contact Us</h2>
+        <div class="boxes-container">
+            <div class="box animate-middle">
+                <h3>Get in Touch</h3>
+                <p>We're here to help with any questions, feedback, or suggestions.</p>
+                <p><strong>Email:</strong> support@maxy.ai</p>
+                <p><strong>Location:</strong> Bengaluru, Karnataka, India</p>
+                <p>Made by MAXY and passionate team dedicated to accessible AI.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ section -->
+    <section id="faq" class="animate-once">
+        <h2>Frequently Asked Questions</h2>
+        <div class="boxes-container">
+            <div class="box animate-left">
+                <h3>Is MAXY free?</h3>
+                <p>Yes, MAXY is completely free with no hidden fees or subscriptions.</p>
+            </div>
+            <div class="box animate-middle">
+                <h3>What can I use MAXY for?</h3>
+                <p>Anything! Coding help, research, brainstorming, writing, math, and everyday questions.</p>
+            </div>
+            <div class="box animate-right">
+                <h3>Do I need an account?</h3>
+                <p>No account is required to chat, but signing up may unlock future personalized features.</p>
+            </div>
+            <div class="box animate-left">
+                <h3>Is my data private?</h3>
+                <p>Absolutely. Privacy is a core priority—we don't store personal conversations without explicit consent.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            
+            <div id="loginForm" class="auth-form">
+                <h3>Welcome Back</h3>
+                <input type="email" placeholder="Email Address" required>
+                <input type="password" placeholder="Password" required>
+                <button class="auth-submit">Login</button>
+                <div class="auth-footer">
+                    <p>Don't have an account?</p>
+                    <button type="button" class="btn-secondary" id="switchToSignup">Create Account</button>
+                </div>
+            </div>
+
+            <div id="signupForm" class="auth-form" style="display: none;">
+                <h3>Create Account</h3>
+                <input type="text" placeholder="Full Name" required>
+                <input type="email" placeholder="Email Address" required>
+                <input type="password" placeholder="Password" required>
+                <button class="auth-submit">Get Started</button>
+                <div class="auth-footer">
+                    <p>Already have an account?</p>
+                    <button type="button" class="btn-secondary" id="switchToLogin">Login Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div>© 2026 MAXY. All rights reserved.</div>
+        <div>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#contact">Contact</a>
+        </div>
+    </footer>
+
+    <!-- Three.js Tubes Cursor -->
+    <script type="module">
+        function randomColors(count) {
+            return Array.from({ length: count }, () => {
+                return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+            });
+        }
+
+        import TubesCursor from 'https://cdn.jsdelivr.net/npm/threejs-components@0.0.19/build/cursors/tubes1.min.js';
+        let app = null;
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const canvas = document.getElementById('canvas');
+                if (canvas) {
+                    app = TubesCursor(canvas, {
+                        tubes: {
+                            colors: ["#5e72e4", "#8965e0", "#f5365c"],
+                            lights: {
+                                intensity: 100,
+                                colors: ["#21d4fd", "#b721ff", "#f4d03f", "#11cdef"]
+                            }
+                        }
+                    });
+                }
+            }, 100);
+        });
+
+        document.body.addEventListener('click', (e) => {
+            if (e.target.classList.contains('try-button') || e.target.closest('header') || e.target.closest('footer')) return;
+
+            if (app && app.tubes) {
+                const newTubeColors = randomColors(3);
+                const newLightColors = randomColors(4);
+                app.tubes.setColors(newTubeColors);
+                app.tubes.setLightsColors(newLightColors);
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (app && typeof app.dispose === 'function') {
+                app.dispose();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const logo = document.getElementById('logoGif');
+            if (logo) {
+                logo.addEventListener('click', () => location.reload());
+            }
+        });
+    </script>
+
+    <!-- Combined JS: Hamburger menu, scroll animations, and auth modal -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            /* Hamburger Menu */
+            const menuToggle = document.getElementById('menuToggle');
+            const nav = document.querySelector('header nav');
+            let isOpen = false;
+
+            menuToggle.addEventListener('click', () => {
+                isOpen = !isOpen;
+                nav.classList.toggle('open', isOpen);
+                menuToggle.textContent = isOpen ? '✕' : '☰';
+            });
+
+            document.querySelectorAll('header nav a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (isOpen) {
+                        isOpen = false;
+                        nav.classList.remove('open');
+                        menuToggle.textContent = '☰';
+                    }
+                });
+            });
+
+            /* Scroll Animations */
+            const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            if (!reducedMotion) {
+                const onceObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            onceObserver.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+                const repeatObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                        } else {
+                            entry.target.classList.remove('visible');
+                        }
+                    });
+                }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+                document.querySelectorAll('.animate-once, .animate-middle').forEach(el => onceObserver.observe(el));
+                document.querySelectorAll('.animate-left, .animate-right').forEach(el => repeatObserver.observe(el));
+            } else {
+                document.querySelectorAll('.animate-once, .animate-middle, .animate-left, .animate-right').forEach(el => {
+                    el.classList.add('visible');
+                });
+            }
+
+            /* Auth Modal */
+            const modal = document.getElementById('authModal');
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const closeBtn = document.querySelector('.close-modal');
+            const loginLink = document.querySelector('a[href="login.html"]');
+            const signupLink = document.querySelector('a[href="signup.html"]');
+
+            function openModal(type) {
+                modal.style.display = 'flex';
+                if (type === 'login') {
+                    loginForm.style.display = 'block';
+                    signupForm.style.display = 'none';
+                } else {
+                    loginForm.style.display = 'none';
+                    signupForm.style.display = 'block';
+                }
+            }
+
+            if (loginLink) loginLink.addEventListener('click', (e) => { e.preventDefault(); openModal('login'); });
+            if (signupLink) signupLink.addEventListener('click', (e) => { e.preventDefault(); openModal('signup'); });
+
+            closeBtn.onclick = () => modal.style.display = 'none';
+            window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+
+            document.getElementById('switchToSignup').onclick = () => openModal('signup');
+            document.getElementById('switchToLogin').onclick = () => openModal('login');
+        });
+    </script>
+</body>
+</html>
